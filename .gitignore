@@ -132,4 +132,7 @@ dmypy.json
 .idea
 
 #vscode
-.vscode/
+.vscode/*
+
+#email
+sent_emails/

@@ -10,7 +10,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from api.permissions import IsAdminOrReadOnlyPermission
+from api.permissions import IsAdminPermission
 from foodgram.settings import EMAIL_ADMIN
 from .models import User, Follow
 from .serializers import (SignupSerializer, TokenSerializer,
@@ -62,7 +62,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """Работа с пользователями."""
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = (IsAdminOrReadOnlyPermission,)
+    permission_classes = (IsAdminPermission,)
     pagination_class = LimitOffsetPagination
     filter_backends = (filters.SearchFilter,)
     search_fields = ('username',)

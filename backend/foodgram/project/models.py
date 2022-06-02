@@ -24,7 +24,6 @@ class Tag(models.Model):
     slug = models.SlugField(verbose_name='Ссылка', unique=True)
     color = models.CharField(
         max_length=7,
-        default='#ffffff',
         verbose_name='Цвет',
         unique=True
         )

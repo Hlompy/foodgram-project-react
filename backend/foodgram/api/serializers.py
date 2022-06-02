@@ -1,3 +1,4 @@
+from django.db import transaction
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
@@ -50,9 +51,18 @@ class RecipesListSerializer(serializers.ModelSerializer):
     """
     tags = TagSerializer(many=True, read_only=True)
     author = UserSerializer(read_only=True)
-    ingredients = serializers.SerializerMethodField(read_only=True)
-    is_favorited = serializers.SerializerMethodField(read_only=True)
-    is_in_shopping_cart = serializers.SerializerMethodField(read_only=True)
+    ingredients = serializers.SerializerMethodField(
+        read_only=True,
+        method_name='get_ingredients'
+    )
+    is_favorited = serializers.SerializerMethodField(
+        read_only=True,
+        method_name='get_is_favorited'
+    )
+    is_in_shopping_cart = serializers.SerializerMethodField(
+        read_only=True,
+        method_name='get_is_in_shopping_cart'
+    )
 
     class Meta:
         model = Recipes
@@ -79,7 +89,6 @@ class RecipesListSerializer(serializers.ModelSerializer):
 
 class AddIngredientSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredients.objects.all())
-    amount = serializers.IntegerField()
 
     class Meta:
         model = IngredientAmount
@@ -108,34 +117,34 @@ class RecipesSerializer(serializers.ModelSerializer):
         for ingredient in ingredients:
             ingredient_id = ingredient['id']
             if ingredient_id in ingredients_list:
-                raise serializers.ValidationError({
-                    'ingredients': 'Ингредиенты должны быть уникальными!'
-                })
+                raise serializers.ValidationError(
+                    'Ингредиенты должны быть уникальными!'
+                )
             ingredients_list.append(ingredient_id)
             amount = ingredient['amount']
             if int(amount) <= 0:
-                raise serializers.ValidationError({
-                    'amount': 'Количество ингредиента должно быть больше нуля!'
-                })
+                raise serializers.ValidationError(
+                    'Количество ингредиента должно быть больше нуля!'
+                )
 
         tags = data['tags']
         if not tags:
-            raise serializers.ValidationError({
-                'tags': 'Нужно выбрать хотя бы один тэг!'
-            })
+            raise serializers.ValidationError(
+                'Нужно выбрать хотя бы один тэг!'
+            )
         tags_list = []
         for tag in tags:
             if tag in tags_list:
-                raise serializers.ValidationError({
-                    'tags': 'Тэги должны быть уникальными!'
-                })
+                raise serializers.ValidationError(
+                    'Тэги должны быть уникальными!'
+                )
             tags_list.append(tag)
 
         cooking_time = data['cooking_time']
         if int(cooking_time) <= 0:
-            raise serializers.ValidationError({
-                'cooking_time': 'Время приготовления должно быть больше 0!'
-            })
+            raise serializers.ValidationError(
+                'Время приготовления должно быть больше 0!'
+            )
         return data
 
     @staticmethod
@@ -147,16 +156,17 @@ class RecipesSerializer(serializers.ModelSerializer):
             )
 
     @staticmethod
-    def create_tags(tags, recipe):
+    def add_tags(tags, recipe):
         for tag in tags:
             recipe.tags.add(tag)
 
+    @transaction.atomic
     def create(self, validated_data):
         author = self.context.get('request').user
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
         recipe = Recipes.objects.create(author=author, **validated_data)
-        self.create_tags(tags, recipe)
+        self.add_tags(tags, recipe)
         self.create_ingredients(ingredients, recipe)
         return recipe
 
@@ -165,10 +175,11 @@ class RecipesSerializer(serializers.ModelSerializer):
         context = {'request': request}
         return RecipesListSerializer(instance, context=context).data
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         instance.tags.clear()
         IngredientAmount.objects.filter(recipe=instance).delete()
-        self.create_tags(validated_data.pop('tags'), instance)
+        self.add_tags(validated_data.pop('tags'), instance)
         self.create_ingredients(validated_data.pop('ingredients'), instance)
         return super().update(instance, validated_data)
 

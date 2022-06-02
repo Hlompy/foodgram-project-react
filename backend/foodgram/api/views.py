@@ -29,7 +29,7 @@ class IngredientsViewSet(ReadOnlyModelViewSet):
 class RecipesViewSet(ModelViewSet):
     queryset = Recipes.objects.all()
     permission_classes = (IsAuthorOrAdminOrModeratorPermission,)
-    filter_backends = [DjangoFilterBackend]
+    filter_backends = (DjangoFilterBackend,)
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
