@@ -3,13 +3,13 @@ certifi==2021.10.8
 cffi==1.15.0
 charset-normalizer==2.0.12
 coreapi==2.3.3
-coreschema==0.0.4
 cryptography==36.0.1
 defusedxml==0.7.1
 Django==4.0.2
 django-cors-headers==3.11.0
 django-filter==21.1
 django-templated-mail==1.1.1
+django-utils==0.0.2
 djangorestframework==3.13.1
 djangorestframework-simplejwt==4.8.0
 djoser==2.1.0
