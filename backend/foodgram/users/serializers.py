@@ -60,9 +60,18 @@ class ShortDisplayRecipeSerializer(serializers.ModelSerializer):
 
 
 class FollowSerializer(serializers.Serializer):
-    recipes = serializers.SerializerMethodField(read_only=True)
-    recipes_count = serializers.SerializerMethodField(read_only=True)
-    is_subscribed = serializers.SerializerMethodField(read_only=True)
+    recipes = serializers.SerializerMethodField(
+        read_only=True,
+        method_name='get_recipes'
+    )
+    recipes_count = serializers.SerializerMethodField(
+        read_only=True,
+        method_name='get_recipes_count'
+    )
+    is_subscribed = serializers.SerializerMethodField(
+        read_only=True,
+        method_name='get_is_subscribed'
+    )
 
     class Meta:
         model = User
