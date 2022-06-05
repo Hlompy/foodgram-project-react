@@ -14,7 +14,7 @@ services:
     env_file:
       - ./.env
   backend:
-    image: 1488840678/compose:v1 #new_docker_need
+    image: 1488840678/foodgram_new:v1
     restart: always
     volumes:
       - static_value:/app/static/
