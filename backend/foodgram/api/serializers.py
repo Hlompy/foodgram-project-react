@@ -100,7 +100,9 @@ class RecipesSerializer(serializers.ModelSerializer):
     Сериализатор для добавления рецептов
     """
     tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(), many=True)
+        queryset=Tag.objects.all(), 
+        many=True
+    )
     ingredients = AddIngredientSerializer(many=True)
     author = UserSerializer(read_only=True)
     image = Base64ImageField()

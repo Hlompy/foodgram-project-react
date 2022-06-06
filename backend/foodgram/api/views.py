@@ -94,7 +94,7 @@ class RecipesViewSet(ModelViewSet):
         final_list = {}
         ingredients = IngredientAmount.objects.filter(
             recipe__carts__user=request.user).values_list(
-            'ingredient__name', 'ingredient__measure',
+            'ingredients__name', 'ingredients__measure',
             'amount'
         )
         for item in ingredients:
