@@ -12,6 +12,7 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 
 from project.models import (Favourites, Ingredients, Recipes,
                             ShoppingCart, IngredientAmount, Tag)
+from .filters import IngredientSearchFilter, RecipesFilter
 from .permissions import IsAuthorOrAdminOrModeratorPermission
 from .serializers import (FavouritesSerializer, IngredientsSerializer,
                           RecipesListSerializer, RecipesSerializer,
@@ -25,14 +26,21 @@ class TagViewSet(ReadOnlyModelViewSet):
 
 
 class IngredientsViewSet(ReadOnlyModelViewSet):
+    """
+    ViewSet для работы с ингредиентами.
+    Добавить ингредиент может администратор.
+    """
     queryset = Ingredients.objects.all()
-    permission_classes = (AllowAny,)
+    permission_classes = (AllowAny, )
     serializer_class = IngredientsSerializer
+    filter_backends = (IngredientSearchFilter,)
+    search_fields = ('^name',)
 
 
 class RecipesViewSet(ModelViewSet):
     queryset = Recipes.objects.all()
     permission_classes = (IsAuthorOrAdminOrModeratorPermission,)
+    filterset_class = RecipesFilter
     filter_backends = (DjangoFilterBackend,)
 
     def get_serializer_class(self):
