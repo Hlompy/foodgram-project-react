@@ -35,16 +35,6 @@ class RecipesViewSet(ModelViewSet):
     permission_classes = (IsAuthorOrAdminOrModeratorPermission,)
     filter_backends = (DjangoFilterBackend,)
 
-
-    def get_queryset(self):
-        queryset = Recipes.objects.all()
-        user = self.request.user
-        if self.request.query_params.get('is_favorited') == '1':
-            queryset = queryset.filter(favorite_recipe__user=user)
-        if self.request.query_params.get('is_in_shopping_cart') == '1':
-            queryset = queryset.filter(recipe_in_shopping_cart__user=user)
-        return queryset
-
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
             return RecipesListSerializer
@@ -93,7 +83,7 @@ class RecipesViewSet(ModelViewSet):
     def download_shopping_cart(self, request):
         final_list = {}
         ingredients = IngredientAmount.objects.filter(
-            recipe__carts__user=request.user).values_list(
+            recipes__carts__user=request.user).values_list(
             'ingredients__name', 'ingredients__measure',
             'amount'
         )
