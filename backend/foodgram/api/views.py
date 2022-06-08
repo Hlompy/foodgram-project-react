@@ -42,7 +42,7 @@ class IngredientsViewSet(ReadOnlyModelViewSet):
     search_fields = ('^name',)
 
 
-class RecipeViewSet(ModelViewSet):
+class RecipesViewSet(ModelViewSet):
     """
     ViewSet для работы с рецептами.
     Для анонимов разрешен только просмотр рецептов.
