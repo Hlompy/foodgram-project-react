@@ -83,4 +83,4 @@ docker-compose exec backend python manage.py collectstatic --noinput
 ```
 
 ## Сайт
-[51.250.110.145](51.250.110.145)
+[51.250.110.145]
