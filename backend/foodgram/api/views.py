@@ -1,25 +1,30 @@
 from django.http import HttpResponse
-from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from rest_framework.pagination import LimitOffsetPagination
 
-from project.models import (Favourites, Ingredients, Recipes,
-                            ShoppingCart, IngredientAmount, Tag)
-from .filters import IngredientSearchFilter, RecipesFilter
+from project.models import (Favourites, Ingredients, IngredientAmount, Recipes,
+                            ShoppingCart, Tag)
+from .filters import IngredientSearchFilter, RecipeFilter
 from .permissions import IsAuthorOrAdminOrModeratorPermission
-from .serializers import (FavouritesSerializer, IngredientsSerializer,
-                          RecipesListSerializer, RecipesSerializer,
+from .serializers import (FavoriteSerializer, IngredientSerializer,
+                          RecipeListSerializer, RecipeSerializer,
                           ShoppingCartSerializer, TagSerializer)
 
 
-class TagViewSet(ReadOnlyModelViewSet):
+class TagsViewSet(ReadOnlyModelViewSet):
+    """
+    ViewSet для работы с тегами.
+    Добавить тег может администратор.
+    """
     queryset = Tag.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = TagSerializer
@@ -32,21 +37,26 @@ class IngredientsViewSet(ReadOnlyModelViewSet):
     """
     queryset = Ingredients.objects.all()
     permission_classes = (AllowAny, )
-    serializer_class = IngredientsSerializer
+    serializer_class = IngredientSerializer
     filter_backends = (IngredientSearchFilter,)
     search_fields = ('^name',)
 
 
-class RecipesViewSet(ModelViewSet):
+class RecipeViewSet(ModelViewSet):
+    """
+    ViewSet для работы с рецептами.
+    Для анонимов разрешен только просмотр рецептов.
+    """
     queryset = Recipes.objects.all()
     permission_classes = (IsAuthorOrAdminOrModeratorPermission,)
-    filterset_class = RecipesFilter
     filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
+    pagination_class = LimitOffsetPagination
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
-            return RecipesListSerializer
-        return RecipesSerializer
+            return RecipeListSerializer
+        return RecipeSerializer
 
     @staticmethod
     def post_method_for_actions(request, pk, serializers):
@@ -68,7 +78,7 @@ class RecipesViewSet(ModelViewSet):
             permission_classes=[IsAuthenticated])
     def favorite(self, request, pk):
         return self.post_method_for_actions(
-            request=request, pk=pk, serializers=FavouritesSerializer)
+            request=request, pk=pk, serializers=FavoriteSerializer)
 
     @favorite.mapping.delete
     def delete_favorite(self, request, pk):
@@ -91,7 +101,7 @@ class RecipesViewSet(ModelViewSet):
     def download_shopping_cart(self, request):
         final_list = {}
         ingredients = IngredientAmount.objects.filter(
-            recipes__carts__user=request.user).values_list(
+            recipe__carts__user=request.user).values_list(
             'ingredients__name', 'ingredients__measure',
             'amount'
         )

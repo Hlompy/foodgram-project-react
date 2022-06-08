@@ -1,4 +1,3 @@
-from django.db import transaction
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
@@ -17,7 +16,7 @@ class TagSerializer(serializers.ModelSerializer):
         read_only_fields = '__all__',
 
 
-class IngredientsSerializer(serializers.ModelSerializer):
+class IngredientSerializer(serializers.ModelSerializer):
     """
     Сериализатор для ингредиентов
     """
@@ -42,7 +41,7 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measure', 'amount')
 
 
-class RecipesListSerializer(serializers.ModelSerializer):
+class RecipeListSerializer(serializers.ModelSerializer):
     """
     Сериализатор для отображения рецептов
     """
@@ -95,7 +94,7 @@ class AddIngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'amount')
 
 
-class RecipesSerializer(serializers.ModelSerializer):
+class RecipeSerializer(serializers.ModelSerializer):
     """
     Сериализатор для добавления рецептов
     """
@@ -160,22 +159,20 @@ class RecipesSerializer(serializers.ModelSerializer):
         for tag in tags:
             recipe.tags.add(tag)
 
-    @transaction.atomic
     def create(self, validated_data):
         author = self.context.get('request').user
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
         recipe = Recipes.objects.create(author=author, **validated_data)
-        self.create_tags(tags, recipe)
+        self.add_tags(tags, recipe)
         self.create_ingredients(ingredients, recipe)
         return recipe
 
     def to_representation(self, instance):
         request = self.context.get('request')
         context = {'request': request}
-        return RecipesListSerializer(instance, context=context).data
+        return RecipeListSerializer(instance, context=context).data
 
-    @transaction.atomic
     def update(self, instance, validated_data):
         instance.tags.clear()
         IngredientAmount.objects.filter(recipe=instance).delete()
@@ -193,7 +190,7 @@ class ShortRecipeSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-class FavouritesSerializer(serializers.ModelSerializer):
+class FavoriteSerializer(serializers.ModelSerializer):
     """
     Сериализатор для списка избранного
     """
