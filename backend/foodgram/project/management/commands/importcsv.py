@@ -4,7 +4,7 @@ import os
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
-from project.models import Ingredients
+from project.models import Ingredient
 
 
 DATA_ROOT = os.path.join(settings.BASE_DIR, 'data')
@@ -25,7 +25,7 @@ class Command(BaseCommand):
                 data = csv.reader(f)
                 for row in data:
                     name, measure = row
-                    Ingredients.objects.get_or_create(
+                    Ingredient.objects.get_or_create(
                         name=name,
                         measure=measure
                     )
