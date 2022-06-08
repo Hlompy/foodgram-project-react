@@ -1,4 +1,4 @@
-from django.db import transaction 
+from django.db import transaction
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 
@@ -99,7 +99,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     Сериализатор для добавления рецептов
     """
     tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(), 
+        queryset=Tag.objects.all(),
         many=True
     )
     ingredients = AddIngredientSerializer(many=True)

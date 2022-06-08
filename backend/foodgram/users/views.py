@@ -19,12 +19,13 @@ class CustomUserViewSet(UserViewSet):
     serializer_class = CustomUserSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
 
+
 class FollowViewSet(APIView):
     """Добавление и удаление подписок на автора"""
     serializer_class = FollowSerializer
     permission_classes = (IsAuthenticated,)
     pagination_class = LimitOffsetPagination
-    
+
     def post(self, request, *args, **kwargs):
         user_id = self.kwargs.get('user_id')
         if user_id == request.user.id:

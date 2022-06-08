@@ -49,7 +49,7 @@ class RecipeViewSet(ModelViewSet):
     """
     queryset = Recipe.objects.all()
     permission_classes = (IsAuthorOrAdminOrModeratorPermission,)
-    filter_backends =(DjangoFilterBackend,)
+    filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     pagination_class = LimitOffsetPagination
 
