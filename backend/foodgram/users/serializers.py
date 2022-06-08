@@ -1,7 +1,7 @@
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 
-from project.models import Recipes
+from project.models import Recipe
 from .models import Follow, User
 
 
@@ -55,7 +55,7 @@ class CustomUserSerializer(UserSerializer):
 
 class ShortDisplayRecipeSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Recipes
+        model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
 
 

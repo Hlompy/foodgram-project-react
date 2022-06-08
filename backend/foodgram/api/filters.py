@@ -1,7 +1,7 @@
 from django_filters.rest_framework import FilterSet, filters
 from rest_framework.filters import SearchFilter
 
-from project.models import Recipes
+from project.models import Recipe
 
 
 class IngredientSearchFilter(SearchFilter):
@@ -16,7 +16,7 @@ class RecipeFilter(FilterSet):
     )
 
     class Meta:
-        model = Recipes
+        model = Recipe
         fields = ('tags', 'author', 'is_favorited', 'is_in_shopping_cart')
 
     def filter_is_favorited(self, queryset, name, value):
