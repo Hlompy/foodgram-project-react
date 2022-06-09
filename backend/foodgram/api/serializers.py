@@ -1,6 +1,7 @@
 from django.db import transaction
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
 from project.models import (Favorite, Ingredient, IngredientAmount, Recipe,
                             ShoppingCart, Tag)
@@ -14,7 +15,7 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = '__all__'
-        read_only_fields = '__all__',
+        read_only_fields = ('name', 'color', 'slug')
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -24,7 +25,7 @@ class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = '__all__'
-        read_only_fields = '__all__',
+        read_only_fields = ('name', 'measure')
 
 
 class IngredientAmountSerializer(serializers.ModelSerializer):
@@ -83,15 +84,22 @@ class RecipeListSerializer(serializers.ModelSerializer):
             user=request.user, recipe=obj).exists()
 
 
-class AddIngredientSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор для добавления Ингредиентов
-    """
-    id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
+class IngredientInRecipeSerializer(serializers.ModelSerializer):
+    """Сериалайзер для связи рецепта и списка ингредиентов"""
+    id = serializers.ReadOnlyField(source='ingredient.id')
+    name = serializers.ReadOnlyField(source='ingredient.name')
+    measure = serializers.ReadOnlyField(
+        source='ingredient.measure')
 
     class Meta:
         model = IngredientAmount
-        fields = ('id', 'amount')
+        fields = ('id', 'name', 'measure', 'amount',)
+        validators = [
+            UniqueTogetherValidator(
+                queryset=IngredientAmount.objects.all(),
+                fields=['ingredients', 'recipe']
+            )
+        ]
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -102,7 +110,11 @@ class RecipeSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all(),
         many=True
     )
-    ingredients = AddIngredientSerializer(many=True)
+    ingredients = IngredientInRecipeSerializer(
+        source='ingredientinrecipe_set',
+        many=True,
+        read_only=True
+    )
     author = CustomUserSerializer(read_only=True)
     image = Base64ImageField()
 

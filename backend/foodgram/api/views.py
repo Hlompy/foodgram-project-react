@@ -1,20 +1,22 @@
+from datetime import datetime as dt
+from urllib.parse import unquote
+from django.db.models import F, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfgen import canvas
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.pagination import LimitOffsetPagination
+from rest_framework.permissions import AllowAny
 
 from project.models import (Favorite, Ingredient, IngredientAmount, Recipe,
                             ShoppingCart, Tag)
 from .filters import IngredientSearchFilter, RecipeFilter
-from .permissions import IsAuthorOrAdminOrModeratorPermission
+from .permissions import (IsAuthorOrAdminOrModeratorPermission, 
+                          IsAdminOrReadOnlyPermission)
 from .serializers import (FavoriteSerializer, IngredientSerializer,
                           RecipeListSerializer, RecipeSerializer,
                           ShoppingCartSerializer, TagSerializer)
@@ -36,7 +38,7 @@ class IngredientsViewSet(ReadOnlyModelViewSet):
     Добавить ингредиент может администратор.
     """
     queryset = Ingredient.objects.all()
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAdminOrReadOnlyPermission,)
     serializer_class = IngredientSerializer
     filter_backends = (IngredientSearchFilter,)
     search_fields = ('^name',)
@@ -96,38 +98,32 @@ class RecipeViewSet(ModelViewSet):
         return self.delete_method_for_actions(
             request=request, pk=pk, model=ShoppingCart)
 
-    @action(detail=False, methods=['get'],
-            permission_classes=[IsAuthenticated])
+    @action(methods=('get',), detail=False)
     def download_shopping_cart(self, request):
-        final_list = {}
+        user = self.request.user
+        if not user.carts.exists():
+            return Response(status.HTTP_400_BAD_REQUEST)
         ingredients = IngredientAmount.objects.filter(
-            recipe__carts__user=request.user).values_list(
-            'ingredient__name', 'ingredient__measure',
-            'amount'
+            recipe__in=(user.carts.values('id'))
+        ).values(
+            ingredient=F('ingredient__name'),
+            measure=F('ingredient__measure')
+        ).annotate(amount=Sum('amount'))
+
+        filename = f'{user.username}_shopping_list.txt'
+        shopping_list = (
+            f'Список покупок для:\n\n{user.first_name}\n\n'
+            f'{dt.now().strftime("%d/%m/%Y %H:%M")}\n\n'
         )
-        for item in ingredients:
-            name = item[0]
-            if name not in final_list:
-                final_list[name] = {
-                    'measure': item[1],
-                    'amount': item[2]
-                }
-            else:
-                final_list[name]['amount'] += item[2]
-        pdfmetrics.registerFont(
-            TTFont('Handicraft', 'data/Handicraft.ttf', 'UTF-8'))
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = ('attachment; '
-                                           'filename="shopping_list.pdf"')
-        page = canvas.Canvas(response)
-        page.setFont('Handicraft', size=24)
-        page.drawString(200, 800, 'Список покупок')
-        page.setFont('Handicraft', size=16)
-        height = 750
-        for i, (name, data) in enumerate(final_list.items(), 1):
-            page.drawString(75, height, (f'{i}. {name} - {data["amount"]} '
-                                         f'{data["measure"]}'))
-            height -= 25
-        page.showPage()
-        page.save()
+        for ing in ingredients:
+            shopping_list += (
+                f'{ing["ingredient"]}: {ing["amount"]} {ing["measure"]}\n'
+            )
+
+        shopping_list += '\n\nПосчитано в Foodgram'
+
+        response = HttpResponse(
+            shopping_list, content_type='text.txt; charset=utf-8'
+        )
+        response['Content-Disposition'] = f'attachment; filename={filename}'
         return response
