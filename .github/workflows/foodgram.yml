@@ -63,7 +63,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
           script: |
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgramer
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgramer:v45
             sudo docker-compose stop
             sudo docker-compose rm backend
             rm .env
