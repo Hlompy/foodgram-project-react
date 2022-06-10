@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
-from rest_framework.pagination import LimitOffsetPagination
+from .pagination import CustomPageNumberPagination
 from rest_framework.permissions import AllowAny
 
 from foodgram.settings import FILENAME
@@ -55,7 +55,7 @@ class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = (IsAuthorOrAdminOrModeratorPermission,)
     filter_backends = (DjangoFilterBackend,)
-    pagination_class = LimitOffsetPagination
+    pagination_class = CustomPageNumberPagination
     filterset_class = RecipeFilter
 
     def get_serializer_class(self):
