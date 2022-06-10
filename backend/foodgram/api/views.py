@@ -1,9 +1,7 @@
-from datetime import datetime as dt
-from urllib.parse import unquote
-from django.db.models import F, Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
+from django.db.models import F, Sum
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -12,6 +10,7 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny
 
+from foodgram.settings import FILENAME
 from project.models import (Favorite, Ingredient, IngredientAmount, Recipe,
                             ShoppingCart, Tag)
 from .filters import IngredientSearchFilter, RecipeFilter
@@ -30,6 +29,7 @@ class TagsViewSet(ReadOnlyModelViewSet):
     queryset = Tag.objects.all()
     permission_classes = (AllowAny,)
     serializer_class = TagSerializer
+    pagination_class = None
 
 
 class IngredientsViewSet(ReadOnlyModelViewSet):
@@ -41,6 +41,7 @@ class IngredientsViewSet(ReadOnlyModelViewSet):
     permission_classes = (IsAdminOrReadOnlyPermission,)
     serializer_class = IngredientSerializer
     filter_backends = (IngredientSearchFilter,)
+    pagination_class = None
     search_fields = ('^name',)
 
 
@@ -52,8 +53,8 @@ class RecipeViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
     permission_classes = (IsAuthorOrAdminOrModeratorPermission,)
     filter_backends = (DjangoFilterBackend,)
-    filterset_class = RecipeFilter
     pagination_class = LimitOffsetPagination
+    filterset_class = RecipeFilter
 
     def get_serializer_class(self):
         if self.action in ('list', 'retrieve'):
@@ -98,32 +99,26 @@ class RecipeViewSet(ModelViewSet):
         return self.delete_method_for_actions(
             request=request, pk=pk, model=ShoppingCart)
 
-    @action(methods=('get',), detail=False)
-    def download_shopping_cart(self, request):
-        user = self.request.user
-        if not user.carts.exists():
-            return Response(status.HTTP_400_BAD_REQUEST)
-        ingredients = IngredientAmount.objects.filter(
-            recipe__in=(user.carts.values('id'))
-        ).values(
-            ingredient=F('ingredient__name'),
-            measure=F('ingredient__measure')
-        ).annotate(amount=Sum('amount'))
+    @action(
+        detail=False,
+        methods=["GET"],
+        url_name='download_shopping_cart',
+        url_path='download_shopping_cart',
+        permission_classes=[IsAuthenticated]
+    )
+    def download(self, request):
+        shopping_list = IngredientAmount.objects.filter(
+            recipe__carts__user=request.user).values(
+            'ingredient__name', 'ingredient__measure').order_by(
+                'ingredient__name').annotate(ingredient_total=Sum('amount'))
 
-        filename = f'{user.username}_shopping_list.txt'
-        shopping_list = (
-            f'Список покупок для:\n\n{user.first_name}\n\n'
-            f'{dt.now().strftime("%d/%m/%Y %H:%M")}\n\n'
+        content = (
+         [f'{item["ingredient__name"]} ({item["ingredient__measure"]})'
+          f'- {item["ingredient_total"]}\n'
+          for item in shopping_list]
+                   )
+        response = HttpResponse(content, content_type='text/plain')
+        response['Content-Disposition'] = (
+            f'attachment; filename={FILENAME}'
         )
-        for ing in ingredients:
-            shopping_list += (
-                f'{ing["ingredient"]}: {ing["amount"]} {ing["measure"]}\n'
-            )
-
-        shopping_list += '\n\nПосчитано в Foodgram'
-
-        response = HttpResponse(
-            shopping_list, content_type='text.txt; charset=utf-8'
-        )
-        response['Content-Disposition'] = f'attachment; filename={filename}'
         return response
