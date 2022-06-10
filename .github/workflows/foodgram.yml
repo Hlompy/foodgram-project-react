@@ -62,7 +62,7 @@ jobs:
           username: ${{ secrets.USER }}
           key: ${{ secrets.SSH_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
-          stack_file_name: docker-compose.yml #make in /home
+          stack_file_name: docker-compose.yml #make in /home v1
           script: |
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgramer:v45
             sudo docker-compose stop
