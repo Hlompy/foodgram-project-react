@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from django.db.models import F, Sum
+from django.db.models import Sum
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -14,7 +14,7 @@ from foodgram.settings import FILENAME
 from project.models import (Favorite, Ingredient, IngredientAmount, Recipe,
                             ShoppingCart, Tag)
 from .filters import IngredientSearchFilter, RecipeFilter
-from .permissions import (IsAuthorOrAdminOrModeratorPermission, 
+from .permissions import (IsAuthorOrAdminOrModeratorPermission,
                           IsAdminOrReadOnlyPermission)
 from .serializers import (FavoriteSerializer, IngredientSerializer,
                           RecipeListSerializer, RecipeSerializer,
@@ -113,10 +113,10 @@ class RecipeViewSet(ModelViewSet):
                 'ingredient__name').annotate(ingredient_total=Sum('amount'))
 
         content = (
-         [f'{item["ingredient__name"]} ({item["ingredient__measure"]})'
-          f'- {item["ingredient_total"]}\n'
-          for item in shopping_list]
-                   )
+            [f'{item["ingredient__name"]} ({item["ingredient__measure"]})'
+             f'- {item["ingredient_total"]}\n'
+             for item in shopping_list]
+        )
         response = HttpResponse(content, content_type='text/plain')
         response['Content-Disposition'] = (
             f'attachment; filename={FILENAME}'

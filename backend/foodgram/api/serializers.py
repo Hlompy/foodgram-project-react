@@ -1,7 +1,6 @@
 from django.db import transaction
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 
 from project.models import (Favorite, Ingredient, IngredientAmount, Recipe,
                             ShoppingCart, Tag)
@@ -102,7 +101,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         queryset=Tag.objects.all(),
         many=True
     )
-    ingredients =  IngredientInRecipeSerializer(many=True)
+    ingredients = IngredientInRecipeSerializer(many=True)
     author = CustomUserSerializer(read_only=True)
     image = Base64ImageField()
 
@@ -113,7 +112,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             'name', 'text', 'cooking_time')
 
     def validate(self, data):
-        ingredients =  data['ingredients']
+        ingredients = data['ingredients']
         ingredients_list = []
         for ingredient in ingredients:
             ingredient_id = ingredient['id']
