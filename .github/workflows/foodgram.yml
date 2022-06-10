@@ -65,7 +65,6 @@ jobs:
           stack_file_name: docker-compose.yml
           script: |
             sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgramer:v45
-            cd ../infra
             sudo docker-compose stop
             sudo docker-compose rm backend
             rm .env
