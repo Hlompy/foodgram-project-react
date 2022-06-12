@@ -14,7 +14,7 @@ services:
     env_file:
       - ./.env
   backend:
-    image: 1488840678/foodgramer:v45
+    image: 1488840678/foodgramer:v53
     restart: always
     volumes:
       - static_value:/app/static/
