@@ -48,7 +48,7 @@ jobs:
           context: ./backend
           file: ./backend/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/foodgramer:v50
+          tags: ${{ secrets.DOCKER_USERNAME }}/foodgramer:v53
 
   deploy:
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
@@ -64,7 +64,7 @@ jobs:
           passphrase: ${{ secrets.PASSPHRASE }}
           stack_file_name: docker-compose.yml #make in /home v3
           script: |
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgramer:v50
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/foodgramer:v53
             sudo docker-compose stop
             sudo docker-compose rm backend
             rm .env
