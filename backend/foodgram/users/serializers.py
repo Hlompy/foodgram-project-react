@@ -6,6 +6,9 @@ from .models import Follow, User
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
+    """
+    Сериализатор для регистрации пользователя.
+    """
     class Meta:
         model = User
         fields = (
@@ -31,10 +34,7 @@ class CustomUserCreateSerializer(UserCreateSerializer):
 
 
 class CustomUserSerializer(UserSerializer):
-    is_subscribed = serializers.SerializerMethodField(
-        read_only=True,
-        method_name='get_is_subscribed'
-    )
+    is_subscribed = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
@@ -53,36 +53,26 @@ class CustomUserSerializer(UserSerializer):
         return Follow.objects.filter(user=user, author=obj.id).exists()
 
 
-class ShortDisplayRecipeSerializer(serializers.ModelSerializer):
+class ShortRecipeSerializer(serializers.ModelSerializer):
+    """
+    Сериализатор для краткого отображения сведений о рецепте
+    """
     class Meta:
         model = Recipe
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-class FollowSerializer(serializers.Serializer):
-    recipes = serializers.SerializerMethodField(
-        read_only=True,
-        method_name='get_recipes'
-    )
-    recipes_count = serializers.SerializerMethodField(
-        read_only=True,
-        method_name='get_recipes_count'
-    )
-    is_subscribed = serializers.SerializerMethodField(
-        read_only=True,
-        method_name='get_is_subscribed'
-    )
+class FollowSerializer(CustomUserSerializer):
+    """
+    Сериализатор для вывода подписок пользователя
+    """
+    recipes = serializers.SerializerMethodField(read_only=True)
+    recipes_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
         fields = ('email', 'id', 'username', 'first_name', 'last_name',
                   'is_subscribed', 'recipes', 'recipes_count')
-
-    def get_is_subscribed(self, obj):
-        user = self.context.get('request').user
-        if user.is_anonymous:
-            return False
-        return Follow.objects.filter(user=user, author=obj.id).exists()
 
     @staticmethod
     def get_recipes_count(obj):
@@ -94,4 +84,4 @@ class FollowSerializer(serializers.Serializer):
         recipes_limit = request.query_params.get('recipes_limit')
         if recipes_limit:
             recipes = recipes[:int(recipes_limit)]
-        return ShortDisplayRecipeSerializer(recipes, many=True).data
+        return ShortRecipeSerializer(recipes, many=True).data

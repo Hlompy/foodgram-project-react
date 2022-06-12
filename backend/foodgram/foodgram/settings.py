@@ -32,9 +32,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    'reportlab',
-    'reportlab.pdfbase',
-    'reportlab.pdfgen',
     'djoser',
     'django_filters',
     'corsheaders',
@@ -159,7 +156,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ],
 
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
 
     'PAGE_SIZE': 5,
 }
